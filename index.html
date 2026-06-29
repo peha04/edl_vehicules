@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-body: #FEFDF0;
+            --bg-card: #FFFFFF;
+            --text-main: #2C3E50;
+            --text-label: #34495E;
+            --border: #DCDCDC;
+            --input-bg: #FAFAFA;
+            --header-bg: #34495E;
+        }
+        body.dark-mode {
+            --bg-body: #1A1A1A;
+            --bg-card: #2C3E50;
+            --text-main: #FEFDF0;
+            --text-label: #DCDCDC;
+            --border: #455A64;
+            --input-bg: #34495E;
+            --header-bg: #1A1A1A;
+        }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: var(--bg-body);
+            transition: background-color 0.3s ease;
+            padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center;
+        }
+        .theme-switch-wrapper {
+            width: 100%; max-width: 600px; display: flex; justify-content: flex-end; margin-bottom: 10px;
+        }
+        .theme-switch { display: inline-block; height: 24px; position: relative; width: 50px; }
+        .theme-switch input { display:none; }
+        .slider {
+            background-color: #ccc; bottom: 0; cursor: pointer; left: 0; position: absolute;
+            right: 0; top: 0; transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            background-color: white; content: ""; height: 18px; left: 4px; position: absolute;
+            bottom: 3px; transition: .4s; width: 18px; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #2C3E50; }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .container { 
+            background-color: var(--bg-card); padding: 25px; border-radius: 8px; 
+            box-shadow: 0 6px 25px rgba(0,0,0,0.2); width: 100%; max-width: 600px; 
+            transition: background-color 0.3s ease; color: var(--text-main);
+        }
+        h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 2px; color: var(--text-main); text-align: center; margin-bottom: 25px; }
+        h3 { font-family: 'Oswald', sans-serif; font-size: 1em; color: #FFFFFF; text-transform: uppercase; margin-top: 25px; background: var(--header-bg); padding: 7px 12px; border-radius: 4px; }
+        .row { display: flex; gap: 12px; margin-bottom: 12px; }
+        .row > div { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.85em; color: var(--text-label); text-transform: uppercase; }
+        input, select, textarea { 
+            font-family: 'Roboto', sans-serif; width: 100%; padding: 12px; border: 1px solid var(--border);
+            border-radius: 4px; box-sizing: border-box; font-size: 16px; 
+            background-color: var(--input-bg); color: var(--text-main);
+        }
+        
+        /* Zone Photo Simplifiée */
+        .photo-upload-zone { border: 2px dashed var(--border); padding: 20px; border-radius: 4px; text-align: center; background: var(--input-bg); }
+        #fileCountStatus { margin-top: 10px; font-weight: bold; color: #2C3E50; }
+        body.dark-mode #fileCountStatus { color: #FEFDF0; }
+
+        /* Barre de progression */
+        .progress-bar-wrapper { width: 100%; background: var(--border); border-radius: 4px; margin-top: 15px; display: none; }
+        .progress-bar { height: 10px; background: #2C3E50; border-radius: 4px; width: 0%; transition: width 0.3s ease; }
+        body.dark-mode .progress-bar { background: #FEFDF0; }
+
+        button#submitBtn { 
+            font-family: 'Oswald', sans-serif; width: 100%; background: #2C3E50; color: white;
+            border: 2px solid #FEFDF0; padding: 18px; border-radius: 4px; font-size: 1.2em;
+            text-transform: uppercase; letter-spacing: 2px; margin-top: 30px; cursor: pointer; 
+        }
+        button#submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+        body.dark-mode button#submitBtn { background: #FEFDF0; color: #1A1A1A; border: none; }
+        #status { margin-top: 20px; text-align: center; font-weight: 500; }
+        .required { color: #E74C3C; }
+        .optional { font-size: 0.75em; color: #999; text-transform: none; font-weight: 400; }
+    </style>
+</head>
+<body>
+
+<div class="theme-switch-wrapper">
+    <span style="margin-right: 10px; font-size: 0.8em; color: var(--text-label); font-weight: bold; padding-top: 3px;">MODE NUIT</span>
+    <label class="theme-switch">
+        <input type="checkbox" id="checkbox" onclick="toggleTheme()">
+        <div class="slider"></div>
+    </label>
+</div>
+
+<div class="container">
+    <h2>Rapport d'État Véhicule</h2>
+    <form id="carForm">
+        <h3>1. Contact</h3>
+        <div class="row">
+            <div><label>Prénom <span class="required">*</span></label><input type="text" id="prenom" required></div>
+            <div><label>Nom <span class="required">*</span></label><input type="text" id="nom" required></div>
+        </div>
+        <div class="row">
+            <div><label>Téléphone <span class="optional">(optionnel)</span></label><input type="tel" id="tel"></div>
+            <div><label>Poste <span class="required">*</span></label>
+                <select id="poste" required>
+                    <option value="">— Sélectionner —</option>
+                    <option>Production</option><option>Régie</option><option>Caméra</option>
+                    <option>Décoration</option><option>Électricité</option><option>Machinerie</option>
+                    <option>Son</option><option>HMC</option><option>VFX/SFX</option>
+                </select>
+            </div>
+        </div>
+        <label>Email <span class="optional">(optionnel)</span></label>
+        <input type="email" id="email" style="margin-bottom:12px;">
+
+        <h3>2. Véhicule</h3>
+        <div class="row">
+            <div><label>Immatriculation <span class="required">*</span></label><input type="text" id="immat" required></div>
+            <div><label>Loueur <span class="required">*</span></label><input type="text" id="loueur" required></div>
+        </div>
+
+        <h3>3. Inspection (Photos)</h3>
+        <div class="photo-upload-zone">
+            <p style="margin: 0 0 15px 0; font-size: 0.9em; color: var(--text-label);">
+                Utilisez l'appareil photo pour ajouter des images une par une, ou importez un lot depuis votre galerie.
+            </p>
+            
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 15px;">
+                <label for="cameraFile" style="background: #34495E; color: white; padding: 10px 15px; border-radius: 4px; cursor: pointer; display: inline-block; font-family: 'Oswald', sans-serif; font-size: 0.9em;">
+                    📸 PRENDRE UNE PHOTO
+                </label>
+                <input type="file" id="cameraFile" accept="image/*" capture="environment" style="display: none;" onchange="addCameraPhoto()">
+
+                <label for="galleryFiles" style="background: #2C3E50; color: white; padding: 10px 15px; border-radius: 4px; cursor: pointer; display: inline-block; font-family: 'Oswald', sans-serif; font-size: 0.9em;">
+                    📁 CHOISIR UN LOT (GALERIE)
+                </label>
+                <input type="file" id="galleryFiles" accept="image/*" multiple style="display: none;" onchange="addGalleryPhotos()">
+            </div>
+
+            <div id="previewGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-bottom: 15px;"></div>
+
+            <div id="fileCountStatus">Aucune photo sélectionnée</div>
+        </div>
+
+        <label style="margin-top: 15px; display: block;">Remarques <span class="optional">(optionnel)</span></label>
+        <textarea id="remarque" rows="2"></textarea>
+
+        <div class="progress-bar-wrapper" id="progressWrapper">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <button type="button" id="submitBtn" onclick="processForm()">TRANSMETTRE LE RAPPORT</button>
+        <div id="status"></div>
+    </form>
+</div>
+
+<script>
+    // Tableau global pour stocker les fichiers en mémoire
+    let selectedFilesArray = [];
+
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+    }
+
+    // Gestion du bouton Appareil Photo (Ajout un par un)
+    function addCameraPhoto() {
+        const cameraInput = document.getElementById('cameraFile');
+        if (cameraInput.files.length > 0) {
+            selectedFilesArray.push(cameraInput.files[0]);
+            cameraInput.value = ""; 
+            updateDisplayStatus();
+        }
+    }
+
+    // Gestion du bouton Galerie (Ajout de plusieurs fichiers d'un coup)
+    function addGalleryPhotos() {
+        const galleryInput = document.getElementById('galleryFiles');
+        if (galleryInput.files.length > 0) {
+            for (let i = 0; i < galleryInput.files.length; i++) {
+                selectedFilesArray.push(galleryInput.files[i]);
+            }
+            galleryInput.value = ""; 
+            updateDisplayStatus();
+        }
+    }
+
+    // Supprimer une photo du lot avant l'envoi
+    function removePhoto(index) {
+        selectedFilesArray.splice(index, 1);
+        updateDisplayStatus();
+    }
+
+    // Met à jour le texte et génère visuellement les images à l'écran
+    function updateDisplayStatus() {
+        const countStatus = document.getElementById('fileCountStatus');
+        const previewGrid = document.getElementById('previewGrid');
+        
+        if (selectedFilesArray.length > 0) {
+            countStatus.innerText = `📸 ${selectedFilesArray.length} photo(s) prête(s)`;
+        } else {
+            countStatus.innerText = "Aucune photo sélectionnée";
+        }
+
+        previewGrid.innerHTML = ""; // On vide la grille précédente
+        
+        selectedFilesArray.forEach((file, index) => {
+            const container = document.createElement('div');
+            container.style.position = 'relative';
+            container.style.width = '100%';
+            container.style.paddingTop = '100%';
+            container.style.borderRadius = '4px';
+            container.style.overflow = 'hidden';
+            container.style.border = '1px solid var(--border)';
+
+            const img = document.createElement('img');
+            img.style.position = 'absolute';
+            img.style.top = '0'; img.style.left = '0';
+            img.style.width = '100%'; img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            
+            const reader = new FileReader();
+            reader.onload = function(e) { img.src = e.target.result; };
+            reader.readAsDataURL(file);
+
+            const deleteBtn = document.createElement('div');
+            deleteBtn.innerHTML = '×';
+            deleteBtn.style.position = 'absolute';
+            deleteBtn.style.top = '2px'; deleteBtn.style.right = '2px';
+            deleteBtn.style.background = '#E74C3C'; deleteBtn.style.color = 'white';
+            deleteBtn.style.width = '18px'; deleteBtn.style.height = '18px';
+            deleteBtn.style.borderRadius = '50%'; deleteBtn.style.textAlign = 'center';
+            deleteBtn.style.lineHeight = '16px'; deleteBtn.style.fontSize = '14px';
+            deleteBtn.style.cursor = 'pointer'; deleteBtn.style.fontWeight = 'bold';
+            deleteBtn.style.zIndex = '10';
+            deleteBtn.onclick = function() { removePhoto(index); };
+
+            container.appendChild(img);
+            container.appendChild(deleteBtn);
+            previewGrid.appendChild(container);
+        });
+    }
+
+    async function processForm() {
+        const btn    = document.getElementById('submitBtn');
+        const status = document.getElementById('status');
+        const progressWrapper = document.getElementById('progressWrapper');
+        const progressBar     = document.getElementById('progressBar');
+
+        const prenom = document.getElementById('prenom').value.trim();
+        const nom    = document.getElementById('nom').value.trim();
+        const poste  = document.getElementById('poste').value;
+        const immat  = document.getElementById('immat').value.trim();
+        const loueur = document.getElementById('loueur').value.trim();
+
+        if (!prenom || !nom || !poste || !immat || !loueur) {
+            status.innerHTML = "⚠️ Merci de remplir tous les champs obligatoires (*)";
+            return;
+        }
+
+        btn.disabled = true;
+        status.innerText = "Compression des images en cours...";
+        progressWrapper.style.display = "block";
+        progressBar.style.width = "15%";
+
+        const photos = [];
+
+        var now = new Date();
+        var jj  = String(now.getDate()).padStart(2,'0');
+        var mm  = String(now.getMonth()+1).padStart(2,'0');
+        var aa  = String(now.getFullYear()).slice(-2);
+        var hh  = String(now.getHours()).padStart(2,'0');
+        var min = String(now.getMinutes()).padStart(2,'0');
+        var horodatage = jj + mm + aa + "_" + hh + "h" + min;
+
+        try {
+            // Compression et encodage de chaque photo
+            for (let i = 0; i < selectedFilesArray.length; i++) {
+                status.innerText = `Nettoyage et compression de la photo ${i + 1}/${selectedFilesArray.length}...`;
+                const file = selectedFilesArray[i];
+                
+                // Redimensionnement à max 1200px, qualité JPEG à 70% (Détruit le format animé)
+                const base64 = await compressImage(file, 1200, 0.7);
+                
+                photos.push({
+                    name: immat.toUpperCase().replace(/\s+/g, '') + "_Photo" + (i + 1) + "_" + nom.toUpperCase() + "_" + horodatage + ".jpg",
+                    data: base64
+                });
+            }
+        } catch (e) {
+            status.innerHTML = "❌ Erreur lors de la compression : " + e.message;
+            btn.disabled = false;
+            return;
+        }
+
+        progressBar.style.width = "50%";
+        status.innerText = "Envoi des données et création du dossier...";
+
+        const formData = {
+            prenom:   prenom,
+            nom:      nom,
+            tel:      document.getElementById('tel').value.trim(),
+            poste:    poste,
+            email:    document.getElementById('email').value.trim(),
+            immat:    immat,
+            loueur:   loueur,
+            remarque: document.getElementById('remarque').value.trim(),
+            photos:   photos
+        };
+
+        google.script.run
+            .withSuccessHandler(function(result) {
+                progressBar.style.width = "100%";
+                if (result.success) {
+                    status.innerHTML = "✅ TRANSMIS AVEC SUCCÈS !";
+                    document.getElementById('carForm').reset();
+                    selectedFilesArray = [];
+                    updateDisplayStatus();
+                } else {
+                    status.innerHTML = "❌ ERREUR : " + result.error;
+                    btn.disabled = false;
+                }
+            })
+            .withFailureHandler(function(err) {
+                progressBar.style.width = "0%";
+                status.innerHTML = "❌ ERREUR SCRIPT : " + err.message;
+                btn.disabled = false;
+            })
+            .submitForm(formData);
+    }
+
+    // Fonction de compression ultra-robuste (Spéciale Pixel 8 / Motion Photos)
+    function compressImage(file, maxDimension, quality) {
+        return new Promise((resolve, reject) => {
+            // createImageBitmap est parfait pour le Pixel : il extrait l'image fixe 
+            // et ignore complètement la vidéo MP4 cachée à l'intérieur du fichier
+            createImageBitmap(file)
+                .then(imageBitmap => {
+                    const canvas = document.createElement('canvas');
+                    let width = imageBitmap.width;
+                    let height = imageBitmap.height;
+
+                    if (width > height) {
+                        if (width > maxDimension) {
+                            height = Math.round((height * maxDimension) / width);
+                            width = maxDimension;
+                        }
+                    } else {
+                        if (height > maxDimension) {
+                            width = Math.round((width * maxDimension) / height);
+                            height = maxDimension;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Fond blanc de sécurité
+                    ctx.fillStyle = "#FFFFFF";
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    // On dessine le bitmap fixe sur le canvas
+                    ctx.drawImage(imageBitmap, 0, 0, width, height);
+
+                    // Libération de la mémoire du bitmap
+                    imageBitmap.close();
+
+                    // Extraction en JPEG pur et léger
+                    const base64Url = canvas.toDataURL('image/jpeg', quality);
+                    resolve(base64Url.split(',')[1]);
+                })
+                .catch(error => {
+                    // Si createImageBitmap échoue (vieux navigateur), on bascule sur la méthode classique
+                    console.warn("Échec de createImageBitmap, tentative avec la méthode classique...", error);
+                    
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = event => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let w = img.width;
+                            let h = img.height;
+                            if (w > h && w > maxDimension) { h = Math.round((h * maxDimension) / w); w = maxDimension; }
+                            else if (h > maxDimension) { w = Math.round((w * maxDimension) / h); h = maxDimension; }
+                            
+                            canvas.width = w; canvas.height = h;
+                            const ctx = canvas.getContext('2d');
+                            ctx.fillStyle = "#FFFFFF";
+                            ctx.fillRect(0, 0, w, h);
+                            ctx.drawImage(img, 0, 0, w, h);
+                            
+                            const base64Url = canvas.toDataURL('image/jpeg', quality);
+                            resolve(base64Url.split(',')[1]);
+                        };
+                        img.onerror = () => reject(new Error("Impossible de décoder cette photo animée."));
+                        img.src = event.target.result;
+                    };
+                    reader.onerror = err => reject(err);
+                });
+        });
+    }
+</script>
+</body>
+</html>
